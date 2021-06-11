@@ -71,6 +71,22 @@ void free_state(state* s) {
     free(s);
 }
 
+double per(double theta) {
+    if(theta>=0) return theta-(int)(theta*0.5/PI)*2*PI;
+    else return theta-(int)(theta*0.5/PI-1)*2*PI;
+}
+
+double dot(double theta1, double theta2) {
+    return cos(theta2-theta1);
+}
+
+double flip(double r, double theta) {
+    double rp = per(r+PI);
+    double delta = theta-r;
+
+    return per(rp-delta);
+}
+
 int main() {
     int Lx = 4;
     int Ly = 4;
