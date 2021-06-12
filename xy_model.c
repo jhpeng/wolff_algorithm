@@ -141,7 +141,18 @@ void update(state* s, lattice* l, gsl_rng* rng) {
     }
 }
 
+
+int MEASUREMENT_COUNTER=0;
+int BLOCK_SIZE=1000;
+int NOBS=3;
+double* BLOCK_DATA;
 void measurement(state* s) {
+    //initialize the BLOCK_DATA in the first time
+    if(MEASUREMENT_COUNTER==0) {
+        BLOCK_DATA = (double*)malloc(sizeof(double)*BLOCK_SIZE*NOBS);
+    }
+
+    //measure the observable
     int nsite = s->nsite;
     double tempmx = 0;
     double tempmy = 0;
@@ -155,14 +166,36 @@ void measurement(state* s) {
     double mag2 = mag*mag;
     double mag4 = mag*mag*mag*mag;
 
-    printf("%lf, %lf, %lf\n",mag,mag2,mag4);
+    //save each measurement in BLOCK_DATA
+    BLOCK_DATA[BLOCK_SIZE*0+(MEASUREMENT_COUNTER%BLOCK_SIZE)] = mag;
+    BLOCK_DATA[BLOCK_SIZE*1+(MEASUREMENT_COUNTER%BLOCK_SIZE)] = mag2;
+    BLOCK_DATA[BLOCK_SIZE*2+(MEASUREMENT_COUNTER%BLOCK_SIZE)] = mag4;
+
+    MEASUREMENT_COUNTER++;
+
+    if((MEASUREMENT_COUNTER%BLOCK_SIZE)==0) {
+        mag=0;
+        mag2=0;
+        mag4=0;
+        for(int i=0;i<BLOCK_SIZE;i++) {
+            mag  += BLOCK_DATA[BLOCK_SIZE*0+i];
+            mag2 += BLOCK_DATA[BLOCK_SIZE*1+i];
+            mag4 += BLOCK_DATA[BLOCK_SIZE*2+i];
+        }
+        mag  = mag/BLOCK_SIZE;
+        mag2 = mag2/BLOCK_SIZE;
+        mag4 = mag4/BLOCK_SIZE;
+
+        printf("%.12e %.12e %.12e \n",mag,mag2,mag4);
+    }
 }
 
 int main() {
     int Lx = 64;
     int Ly = 64;
-    double Beta = 128;
+    double Beta = 1.0;
     unsigned long int seed = 9733984098;
+    BLOCK_SIZE=2000;
 
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng,seed);
@@ -172,7 +205,6 @@ int main() {
 
     for(int i=0;;i++) {
         update(s,l,rng);
-        printf("%d\n",i);
         measurement(s);
     }
 
