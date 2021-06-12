@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <gsl/gsl_rng.h>
 
@@ -190,12 +191,13 @@ void measurement(state* s) {
     }
 }
 
-int main() {
-    int Lx = 64;
-    int Ly = 64;
-    double Beta = 1.0;
-    unsigned long int seed = 9733984098;
-    BLOCK_SIZE=2000;
+int main(int argc, char** argv) {
+    int Lx = atoi(argv[1]);
+    int Ly = atoi(argv[2]);
+    double Beta = atof(argv[3]);
+    int NBLOCK = atoi(argv[4]);
+    BLOCK_SIZE = atoi(argv[5]);
+    unsigned long int seed = atoi(argv[6]);
 
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng,seed);
@@ -203,7 +205,7 @@ int main() {
     lattice* l = create_square_lattice(Lx,Ly,Beta);
     state* s = create_state(l->nsite,rng);
 
-    for(int i=0;;i++) {
+    for(int i=0;i<(NBLOCK*BLOCK_SIZE);i++) {
         update(s,l,rng);
         measurement(s);
     }
