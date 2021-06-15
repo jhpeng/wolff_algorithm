@@ -94,6 +94,94 @@ double flip(double r, double theta) {
     return per(rp-delta);
 }
 
+int MAX_NC=10;
+int* LATTICE_MAP=NULL;
+int* MAP_COUNTER=NULL;
+void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
+    int s1,s2;
+    int nsite  = s->nsite;
+    int nbond  = l->nbond;
+    int mnspin = l->mnspin;
+
+    //create the LATTICE_MAP in the first time
+    if(LATTICE_MAP==NULL) {
+        LATTICE_MAP = (int*)malloc(sizeof(int)*MAX_NC*nsite);
+        MAP_COUNTER = (int*)malloc(sizeof(int)*nsite);
+
+        for(int i=0;i<nsite;i++) MAP_COUNTER[i]=0;
+
+        for(int i_bond=0;i_bond<nbond;i_bond++) {
+            for(int i=0;i<(l->nspin[i_bond]);i++) {
+                s1 = l->bond2index[i_bond*mnspin+i];
+
+                for(int j=0;j<(l->nspin[i_bond]);j++) {
+                    s2 = l->bond2index[i_bond*mnspin+j];
+
+                    if(s1!=s2) {
+                        LATTICE_MAP[s1*MAX_NC+MAP_COUNTER[s1]] = s2;
+                        MAP_COUNTER[s1]++;
+                    }
+                }
+            }
+        }
+/*
+        //check the LATTICE_MAP
+        for(int i=0;i<nsite;i++) {
+            printf("%d : ",i);
+            for(int j=0;j<MAP_COUNTER[i];j++) {
+                printf("%d ",LATTICE_MAP[i*MAX_NC+j]);
+            }
+            printf("\n");
+        }
+*/
+    }
+    
+    //initialize the cluster
+    for(int i=0;i<nsite;i++) {
+        s->weight[i]  = 1;
+    }
+
+    //randomly pick up an spin for cluster
+    int cluster_size=1;
+    int index = (int)(gsl_rng_uniform_pos(rng)*nsite);
+    s->cluster[0] = index;
+    s->weight[index] = 0;
+    
+    //randomly select a direction for refference
+    double r = gsl_rng_uniform_pos(rng)*2*PI;
+
+    //construct the cluster base on Wolff algorithm
+    double theta1,theta2,dis,w;
+    for(int i=0;i<cluster_size;i++) {
+        for(int j=0;j<MAP_COUNTER[i];j++) {
+            s1 = s->cluster[i];
+            s2 = LATTICE_MAP[s1*MAX_NC+j];
+
+            if(s->weight[s2]) {
+                theta1 = s->theta[s1];
+                theta2 = s->theta[s2];
+
+                w = -2*(l->bondst[i])*dot(r,theta1)*dot(r,theta2);
+
+                dis = gsl_rng_uniform_pos(rng);
+                if(dis<(1-exp(w))){
+                    s->cluster[cluster_size] = s2;
+                    s->weight[s2] = 0;
+                    cluster_size++;
+                }
+            }
+        }
+    }
+
+    //flip the cluster
+    double theta;
+    for(int i=0;i<cluster_size;i++) {
+        s1 = s->cluster[i];
+        theta = s->theta[s1];
+        s->theta[s1] = flip(r,theta);
+    }
+}
+
 void update(state* s, lattice* l, gsl_rng* rng) {
     int nsite  = s->nsite;
     int nbond  = l->nbond;
@@ -204,6 +292,8 @@ int main(int argc, char** argv) {
 
     lattice* l = create_square_lattice(Lx,Ly,Beta);
     state* s = create_state(l->nsite,rng);
+
+    update_single_cluster(s,l,rng);
 
     for(int i=0;i<(NBLOCK*BLOCK_SIZE);i++) {
         update(s,l,rng);
