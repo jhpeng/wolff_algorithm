@@ -138,7 +138,7 @@ void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
     
     //initialize the cluster
     for(int i=0;i<nsite;i++) {
-        s->weight[i]  = 1;
+        s->weight[i] = 1;
     }
 
     //randomly pick up an spin for cluster
@@ -180,6 +180,8 @@ void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
         theta = s->theta[s1];
         s->theta[s1] = flip(r,theta);
     }
+
+    //printf("%d %d \n",index,cluster_size);
 }
 
 void update(state* s, lattice* l, gsl_rng* rng) {
@@ -285,7 +287,8 @@ int main(int argc, char** argv) {
     double Beta = atof(argv[3]);
     int NBLOCK = atoi(argv[4]);
     BLOCK_SIZE = atoi(argv[5]);
-    unsigned long int seed = atoi(argv[6]);
+    int THERMAL = atoi(argv[6]);
+    unsigned long int seed = atoi(argv[7]);
 
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng,seed);
@@ -293,10 +296,10 @@ int main(int argc, char** argv) {
     lattice* l = create_square_lattice(Lx,Ly,Beta);
     state* s = create_state(l->nsite,rng);
 
-    update_single_cluster(s,l,rng);
+    for(int i=0;i<THERMAL;i++) update_single_cluster(s,l,rng);
 
     for(int i=0;i<(NBLOCK*BLOCK_SIZE);i++) {
-        update(s,l,rng);
+        update_single_cluster(s,l,rng);
         measurement(s);
     }
 
