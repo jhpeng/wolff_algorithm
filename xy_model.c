@@ -48,6 +48,47 @@ lattice* create_square_lattice(int lx, int ly, double beta) {
     return l;
 }
 
+lattice* create_honeycomb_lattice(int lx, int ly, double beta) {
+    int nsite = lx*ly;
+    int nbond = (nsite/2)*3;
+    int mnspin = 2;
+
+    lattice* l = (lattice*)malloc(sizeof(lattice));
+    l->bond2index = (int*)malloc(sizeof(int)*nbond*mnspin);
+    l->bondst = (double*)malloc(sizeof(double)*nbond);
+    l->nspin = (int*)malloc(sizeof(int)*nbond);
+
+    int i_bond=0;
+    for(int j=0;j<ly;j++) {
+        for(int i=0;i<lx;i++) {
+            l->bondst[i_bond] = beta;
+            l->nspin[i_bond]  = 2;
+            l->bond2index[i_bond*mnspin+0] = j*lx+i;
+            l->bond2index[i_bond*mnspin+1] = j*lx+(i+1)%lx;
+
+            i_bond++;
+        }
+    }
+    for(int j=0;j<ly;j++) {
+        for(int i=0;i<lx;i++) {
+            if((i+j)%2==0) {
+                l->bondst[i_bond] = beta;
+                l->nspin[i_bond]  = 2;
+                l->bond2index[i_bond*mnspin+0] = j*lx+i;
+                l->bond2index[i_bond*mnspin+1] = ((j+1)%ly)*lx+i;
+
+                i_bond++;
+            }
+        }
+    }
+
+    l->nbond = nbond;
+    l->nsite = nsite;
+    l->mnspin = mnspin;
+
+    return l;
+}
+
 void free_lattice(lattice* l) {
     free(l->bond2index);
     free(l->bondst);
@@ -124,6 +165,7 @@ void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
                 }
             }
         }
+
 /*
         //check the LATTICE_MAP
         for(int i=0;i<nsite;i++) {
@@ -134,6 +176,7 @@ void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
             printf("\n");
         }
 */
+
     }
     
     //initialize the cluster
@@ -293,7 +336,8 @@ int main(int argc, char** argv) {
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng,seed);
 
-    lattice* l = create_square_lattice(Lx,Ly,Beta);
+    //lattice* l = create_square_lattice(Lx,Ly,Beta);
+    lattice* l = create_honeycomb_lattice(Lx,Ly,Beta);
     state* s = create_state(l->nsite,rng);
 
     for(int i=0;i<THERMAL;i++) update_single_cluster(s,l,rng);
