@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include <gsl/gsl_rng.h>
 
 #include <xy_model.h>
@@ -136,6 +137,7 @@ double flip(double r, double theta) {
 }
 
 int MAX_NC=10;
+int CLUSTER_SIZE=0;
 int* LATTICE_MAP=NULL;
 int* MAP_COUNTER=NULL;
 void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
@@ -166,6 +168,11 @@ void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
             }
         }
 
+        //initialize the cluster
+        for(int i=0;i<nsite;i++) {
+            s->weight[i] = 1;
+        }
+
 /*
         //check the LATTICE_MAP
         for(int i=0;i<nsite;i++) {
@@ -179,11 +186,6 @@ void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
 
     }
     
-    //initialize the cluster
-    for(int i=0;i<nsite;i++) {
-        s->weight[i] = 1;
-    }
-
     //randomly pick up an spin for cluster
     int cluster_size=1;
     int index = (int)(gsl_rng_uniform_pos(rng)*nsite);
@@ -215,6 +217,7 @@ void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
             }
         }
     }
+    CLUSTER_SIZE=cluster_size;
 
     //flip the cluster
     double theta;
@@ -222,6 +225,7 @@ void update_single_cluster(state* s, lattice* l, gsl_rng* rng) {
         s1 = s->cluster[i];
         theta = s->theta[s1];
         s->theta[s1] = flip(r,theta);
+        s->weight[s1] = 1;
     }
 
     //printf("%d %d \n",index,cluster_size);
@@ -340,7 +344,23 @@ int main(int argc, char** argv) {
     lattice* l = create_honeycomb_lattice(Lx,Ly,Beta);
     state* s = create_state(l->nsite,rng);
 
-    for(int i=0;i<THERMAL;i++) update_single_cluster(s,l,rng);
+    int counter=0;
+    int cumulative_size = 0;
+    time_t start = clock();
+    time_t end;
+    for(int i=0;i<THERMAL;) {
+        update_single_cluster(s,l,rng);
+        cumulative_size += CLUSTER_SIZE;
+        counter++;
+        if(cumulative_size>(Lx*Ly)){
+            end = clock();
+            printf("%d %f\n",counter,(double)(end-start)/CLOCKS_PER_SEC);
+            start = clock();
+            counter=0;
+            cumulative_size=0;
+            i++;
+        }
+    }
 
     for(int i=0;i<(NBLOCK*BLOCK_SIZE);i++) {
         update_single_cluster(s,l,rng);
