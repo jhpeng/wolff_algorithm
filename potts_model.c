@@ -318,6 +318,10 @@ int main(int argc, char** argv) {
 
     free_lattice(l);
     free_state(conf);
+    gsl_rng_free(rng);
+    free(BLOCK_DATA);
+    free(LATTICE_MAP);
+    free(MAP_COUNTER);
 
     return 0;
 }
