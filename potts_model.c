@@ -230,11 +230,11 @@ void measurement(state* conf, lattice* l) {
     double q1 = 0.0;
     double energy = 0.0;
 
-    int s1,s2;
+    int i1,i2;
     for(int i_bond=0;i_bond<nbond;i_bond++) {
-        s1 = l->bond2index[i_bond*mnspin+0];
-        s2 = l->bond2index[i_bond*mnspin+1];
-        if(s1==s2) energy+=1.0;
+        i1 = l->bond2index[i_bond*mnspin+0];
+        i2 = l->bond2index[i_bond*mnspin+1];
+        if((conf->s[i1])==(conf->s[i2])) energy+=1.0;
     }
     energy = -energy/nsite;
 
@@ -301,9 +301,9 @@ int main(int argc, char** argv) {
         cumulative_size += CLUSTER_SIZE;
         counter++;
         if(cumulative_size>(Lx*Ly)){
-        //if(1){
+        //if(0){
             end = clock();
-            printf("%d %f\n",counter,(double)(end-start)/CLOCKS_PER_SEC);
+            printf("%d %d %f\n",i,counter,(double)(end-start)/CLOCKS_PER_SEC);
             start = clock();
             counter=0;
             cumulative_size=0;
