@@ -259,17 +259,17 @@ void measurement(state* conf, lattice* l) {
         mag=0;
         mag2=0;
         mag4=0;
-        energy=0;
+        //energy=0;
         for(int i=0;i<BLOCK_SIZE;i++) {
             mag  += BLOCK_DATA[BLOCK_SIZE*0+i];
             mag2 += BLOCK_DATA[BLOCK_SIZE*1+i];
             mag4 += BLOCK_DATA[BLOCK_SIZE*2+i];
-            energy += BLOCK_DATA[BLOCK_SIZE*3+i];
+            //energy += BLOCK_DATA[BLOCK_SIZE*3+i];
         }
         mag  = mag/BLOCK_SIZE;
         mag2 = mag2/BLOCK_SIZE;
         mag4 = mag4/BLOCK_SIZE;
-        energy = energy/BLOCK_SIZE;
+        //energy = energy/BLOCK_SIZE;
 
         printf("%.12e %.12e %.12e %.12e \n",mag,mag2,mag4,energy);
     }
@@ -279,17 +279,20 @@ int main(int argc, char** argv) {
     int Lx = atoi(argv[1]);
     int Ly = atoi(argv[2]);
     int Qstat = atoi(argv[3]);
-    double Beta = atof(argv[4]);
-    int NBLOCK = atoi(argv[5]);
-    BLOCK_SIZE = atoi(argv[6]);
-    int THERMAL = atoi(argv[7]);
-    unsigned long int seed = atoi(argv[8]);
+    int Ltype = atoi(argv[4]);
+    double T = atof(argv[5]);
+    double Beta = 1.0/T;
+    int NBLOCK = atoi(argv[6]);
+    BLOCK_SIZE = atoi(argv[7]);
+    int THERMAL = atoi(argv[8]);
+    unsigned long int seed = atoi(argv[9]);
 
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng,seed);
 
-    //lattice* l = create_square_lattice(Lx,Ly,Beta);
-    lattice* l = create_honeycomb_lattice(Lx,Ly,Beta);
+    lattice* l;
+    if(Ltype==0) l = create_square_lattice(Lx,Ly,Beta);
+    else if(Ltype==1) l = create_honeycomb_lattice(Lx,Ly,Beta);
     state* conf = create_state(l->nsite,Qstat,rng);
 
     int counter=0;
