@@ -271,7 +271,8 @@ void measurement(state* conf, lattice* l) {
         mag4 = mag4/BLOCK_SIZE;
         //energy = energy/BLOCK_SIZE;
 
-        printf("%.12e %.12e %.12e %.12e \n",mag,mag2,mag4,energy);
+        //printf("%.12e %.12e %.12e %.12e \n",mag,mag2,mag4,energy);
+        printf("%.16e \n",energy);
     }
 }
 
@@ -284,8 +285,9 @@ int main(int argc, char** argv) {
     double Beta = 1.0/T;
     int NBLOCK = atoi(argv[6]);
     BLOCK_SIZE = atoi(argv[7]);
-    int THERMAL = atoi(argv[8]);
-    unsigned long int seed = atoi(argv[9]);
+    int SWEEP = atoi(argv[8]);
+    int THERMAL = atoi(argv[9]);
+    unsigned long int seed = atoi(argv[10]);
 
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng,seed);
@@ -295,13 +297,14 @@ int main(int argc, char** argv) {
     else if(Ltype==1) l = create_honeycomb_lattice(Lx,Ly,Beta);
     state* conf = create_state(l->nsite,Qstat,rng);
 
-    int counter=0;
-    int cumulative_size = 0;
-    time_t start = clock();
-    time_t end;
-    for(int i=0;i<THERMAL;) {
+    //int counter=0;
+    //int cumulative_size = 0;
+    //time_t start = clock();
+    //time_t end;
+    for(int i=0;i<THERMAL;i++) {
         update_single_cluster(conf,l,Beta,rng);
-        cumulative_size += CLUSTER_SIZE;
+        
+        /*cumulative_size += CLUSTER_SIZE;
         counter++;
         if(cumulative_size>(Lx*Ly)){
         //if(0){
@@ -311,12 +314,13 @@ int main(int argc, char** argv) {
             counter=0;
             cumulative_size=0;
             i++;
-        }
+        }*/
     }
 
     for(int i=0;i<(NBLOCK*BLOCK_SIZE);i++) {
         update_single_cluster(conf,l,Beta,rng);
-        measurement(conf,l);
+        if((i+1)%SWEEP==0)
+            measurement(conf,l);
     }
 
     free_lattice(l);
