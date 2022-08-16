@@ -292,9 +292,11 @@ int main(int argc, char** argv) {
     gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rng,seed);
 
-    lattice* l;
-    if(Ltype==0) l = create_square_lattice(Lx,Ly,Beta);
-    else if(Ltype==1) l = create_honeycomb_lattice(Lx,Ly,Beta);
+    lattice* l = create_square_lattice(Lx,Ly,Beta);
+    if(Ltype==1) { 
+        free_lattice(l);
+        l = create_honeycomb_lattice(Lx,Ly,Beta);
+    }
     state* conf = create_state(l->nsite,Qstat,rng);
 
     //int counter=0;
