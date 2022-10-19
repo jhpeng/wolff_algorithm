@@ -319,12 +319,10 @@ int main(int argc, char** argv) {
         }*/
     }
 
-    for(int i=0;i<(NBLOCK*BLOCK_SIZE);) {
-        update_single_cluster(conf,l,Beta,rng);
-        if((i+1)%SWEEP==0){
-            measurement(conf,l);
-            i++;
-        }
+    for(int i=0;i<(NBLOCK*BLOCK_SIZE);i++) {
+        for(int j=0;j<SWEEP;j++) 
+            update_single_cluster(conf,l,Beta,rng);
+        measurement(conf,l);
     }
 
     free_lattice(l);
